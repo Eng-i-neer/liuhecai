@@ -1,0 +1,1267 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Excel金额追加实时可视化工具 - 增强版</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --primary-color: #3498db;
+            --secondary-color: #2c3e50;
+            --accent-color: #e74c3c;
+            --light-bg: #f8f9fa;
+            --dark-text: #343a40;
+            --red-color: #e74c3c;
+            --green-color: #2ecc71;
+            --blue-color: #3498db;
+            --yellow-color: #f1c40f;
+            --purple-color: #9b59b6;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #e4e7eb 100%);
+            color: var(--dark-text);
+            padding-top: 20px;
+            min-height: 100vh;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        
+        .card {
+            border-radius: 15px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+            border: none;
+            transition: transform 0.3s, box-shadow 0.3s;
+            overflow: hidden;
+            background: white;
+        }
+        
+        .card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 12px 30px rgba(0,0,0,0.18);
+        }
+        
+        .card-header {
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+            font-weight: 700;
+            padding: 18px 25px;
+            border-radius: 15px 15px 0 0 !important;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+        }
+        
+        .card-header i {
+            margin-right: 10px;
+            font-size: 1.3rem;
+        }
+        
+        .table-container {
+            max-height: 420px;
+            overflow-y: auto;
+            overflow-x: auto;
+            border-radius: 0 0 15px 15px;
+            border: 1px solid rgba(0,0,0,0.05);
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-color), #1a6ca3);
+            border: none;
+            padding: 12px 24px;
+            font-weight: 600;
+            transition: all 0.3s;
+            box-shadow: 0 4px 10px rgba(52, 152, 219, 0.3);
+        }
+        
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #2980b9, #13679c);
+            transform: translateY(-3px);
+            box-shadow: 0 6px 15px rgba(52, 152, 219, 0.4);
+        }
+        
+        .btn-danger {
+            background: linear-gradient(135deg, var(--accent-color), #c0392b);
+            border: none;
+            padding: 12px 24px;
+            font-weight: 600;
+            transition: all 0.3s;
+            box-shadow: 0 4px 10px rgba(231, 76, 60, 0.3);
+        }
+        
+        .btn-danger:hover {
+            background: linear-gradient(135deg, #c0392b, #a3291e);
+            transform: translateY(-3px);
+            box-shadow: 0 6px 15px rgba(231, 76, 60, 0.4);
+        }
+        
+        .form-control {
+            padding: 14px 18px;
+            border-radius: 10px;
+            border: 1px solid #ddd;
+            box-shadow: inset 0 2px 5px rgba(0,0,0,0.05);
+            font-size: 1.05rem;
+            transition: all 0.3s;
+        }
+        
+        .form-control:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.3rem rgba(52, 152, 219, 0.25);
+            transform: translateY(-2px);
+        }
+        
+        .input-group-text {
+            background-color: #e9ecef;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            font-size: 1.1rem;
+        }
+        
+        .table thead th {
+            background: linear-gradient(135deg, var(--secondary-color), #1e2a38);
+            color: white;
+            position: sticky;
+            top: 0;
+            font-weight: 600;
+            padding: 15px;
+            text-align: center;
+            z-index: 11;
+        }
+        
+        .table-hover tbody tr:hover {
+            background-color: rgba(52, 152, 219, 0.12);
+        }
+        
+        .number-cell {
+            font-weight: 700;
+            text-align: center;
+            font-size: 1.1rem;
+            position: sticky;
+            left: 0;
+            background-color: white;
+            z-index: 10;
+            min-width: 70px;
+        }
+        
+        .zodiac-cell {
+            position: sticky;
+            left: 70px;
+            background-color: white;
+            z-index: 10;
+            min-width: 90px;
+        }
+        
+        .amount-cell {
+            font-weight: 600;
+            text-align: right;
+            min-width: 90px;
+            font-size: 1.05rem;
+        }
+        
+        .total-cell {
+            font-weight: 800;
+            background: linear-gradient(135deg, rgba(52, 152, 219, 0.15), rgba(41, 128, 185, 0.1)) !important;
+            text-align: right;
+            font-size: 1.1rem;
+            position: sticky;
+            right: 0;
+            background-color: white;
+            z-index: 10;
+            min-width: 120px;
+        }
+        
+        .notification {
+            position: fixed;
+            top: 25px;
+            right: 25px;
+            z-index: 9999;
+            min-width: 320px;
+            animation: slideIn 0.4s, fadeOut 0.6s 3s;
+            border-radius: 12px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            border: none;
+        }
+        
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        
+        @keyframes fadeOut {
+            from { opacity: 1; }
+            to { opacity: 0; }
+        }
+        
+        .zodiac-badge {
+            font-size: 0.95rem;
+            padding: 6px 12px;
+            border-radius: 25px;
+            font-weight: 600;
+            background: linear-gradient(135deg, #e9ecef, #dde1e5);
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        .stats-card {
+            text-align: center;
+            padding: 20px;
+            border-radius: 12px;
+            background: white;
+            transition: all 0.4s;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+            border: 1px solid rgba(0,0,0,0.03);
+        }
+        
+        .stats-card:hover {
+            transform: scale(1.05);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+        
+        .stats-value {
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--primary-color);
+            margin-bottom: 8px;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        .stats-label {
+            font-size: 1rem;
+            color: #5a6268;
+            font-weight: 500;
+        }
+        
+        .progress {
+            height: 10px;
+            margin-top: 10px;
+            border-radius: 5px;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        .highlight-row {
+            animation: highlight 1.8s ease;
+        }
+        
+        @keyframes highlight {
+            0% { background-color: rgba(46, 204, 113, 0.4); }
+            100% { background-color: transparent; }
+        }
+        
+        .color-btn-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+        
+        .zodiac-btn-group {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+        
+        .color-btn {
+            flex: 1;
+            min-width: 80px;
+            font-size: 0.95rem;
+            padding: 8px 12px;
+            border-radius: 10px;
+            font-weight: 600;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            transition: all 0.2s;
+        }
+        
+        .zodiac-btn {
+            font-size: 0.9rem;
+            padding: 8px 5px;
+            border-radius: 10px;
+            font-weight: 600;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            transition: all 0.2s;
+        }
+        
+        .color-btn:hover, .zodiac-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
+        
+        .btn-red {
+            background: linear-gradient(135deg, var(--red-color), #d62c1f);
+            color: white;
+        }
+        
+        .btn-green {
+            background: linear-gradient(135deg, var(--green-color), #27ae60);
+            color: white;
+        }
+        
+        .btn-blue {
+            background: linear-gradient(135deg, var(--blue-color), #2980b9);
+            color: white;
+        }
+        
+        .btn-purple {
+            background: linear-gradient(135deg, var(--purple-color), #8e44ad);
+            color: white;
+        }
+        
+        .number-grid {
+            display: grid;
+            grid-template-columns: repeat(10, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .number-column {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .number-btn {
+            aspect-ratio: 1/1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            font-weight: 700;
+            font-size: 1.1rem;
+            border-radius: 10px;
+            box-shadow: 0 3px 8px rgba(0,0,0,0.1);
+            transition: all 0.3s;
+        }
+        
+        .number-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 12px rgba(0,0,0,0.15);
+        }
+        
+        /* 修改总金额网格样式 */
+        .total-amount-grid {
+            display: grid;
+            grid-template-columns: repeat(10, 1fr);
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+        
+        .total-amount-column {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        
+        .total-amount-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 8px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 3px 8px rgba(0,0,0,0.08);
+            transition: all 0.3s;
+            min-height: 80px;
+        }
+        
+        .total-amount-item:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.12);
+        }
+        
+        .total-amount-number {
+            font-weight: bold;
+            font-size: 1rem;
+            margin-bottom: 5px;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            color: white;
+            font-weight: 700;
+        }
+        
+        .total-amount-input {
+            width: 100%;
+            padding: 8px 5px;
+            text-align: center;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        
+        .total-amount-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.3);
+        }
+        
+        .threshold-controls {
+            display: flex;
+            gap: 12px;
+            margin-top: 20px;
+            padding: 0 15px 15px;
+        }
+        
+        .threshold-input {
+            flex: 1;
+        }
+        
+        .btn-yellow {
+            background: linear-gradient(135deg, var(--yellow-color), #f39c12);
+            color: white;
+            font-weight: 600;
+        }
+        
+        .footer {
+            background: linear-gradient(135deg, var(--secondary-color), #1e2a38);
+            color: white;
+            padding: 25px;
+            border-radius: 15px;
+            margin-top: 30px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.15);
+        }
+        
+        /* 响应式调整 */
+        @media (max-width: 1200px) {
+            .number-grid {
+                grid-template-columns: repeat(5, 1fr);
+            }
+            .zodiac-btn-group {
+                grid-template-columns: repeat(4, 1fr);
+            }
+            .total-amount-grid {
+                grid-template-columns: repeat(5, 1fr);
+            }
+        }
+        
+        @media (max-width: 992px) {
+            .zodiac-btn-group {
+                grid-template-columns: repeat(3, 1fr);
+            }
+            .total-amount-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .number-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
+            
+            .stats-value {
+                font-size: 1.6rem;
+            }
+            
+            .zodiac-btn-group {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .total-amount-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+        
+        @media (max-width: 576px) {
+            .number-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+            
+            .color-btn-group, .zodiac-btn-group {
+                flex-direction: column;
+            }
+            
+            .header {
+                padding: 20px 15px;
+            }
+            
+            .stats-card {
+                padding: 15px;
+            }
+            
+            .zodiac-btn-group {
+                grid-template-columns: repeat(3, 1fr);
+            }
+            
+            .total-amount-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        
+        /* 新增扩展样式 */
+        .total-amount-container {
+            padding: 15px;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        
+        .zodiac-btn i {
+            margin-right: 5px;
+        }
+        
+        .amount-column-header {
+            min-width: 90px;
+        }
+        
+        .amount-columns-container {
+            display: flex;
+            overflow-x: auto;
+        }
+        
+        .total-column-header {
+            min-width: 120px;
+        }
+        
+        /* 移除分隔线 */
+        .column-divider {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header text-center">
+            <h1 class="mb-3"><i class="bi bi-cash-coin me-2"></i>Excel金额追加实时可视化工具 - 增强版</h1>
+            <p class="lead">管理号码数据，实时更新金额并可视化分析</p>
+        </div>
+        
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="stats-card">
+                    <div class="stats-value" id="total-amount">¥0</div>
+                    <div class="stats-label">总金额</div>
+                    <div class="progress">
+                        <div class="progress-bar bg-success" id="total-progress" role="progressbar" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stats-card">
+                    <div class="stats-value" id="record-count">0</div>
+                    <div class="stats-label">记录条数</div>
+                    <div class="progress">
+                        <div class="progress-bar bg-info" id="record-progress" role="progressbar" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stats-card">
+                    <div class="stats-value" id="max-number">0</div>
+                    <div class="stats-label">最高金额号码</div>
+                    <div class="progress">
+                        <div class="progress-bar bg-warning" id="max-progress" role="progressbar" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stats-card">
+                    <div class="stats-value" id="min-number">0</div>
+                    <div class="stats-label">最低金额号码</div>
+                    <div class="progress">
+                        <div class="progress-bar bg-danger" id="min-progress" role="progressbar" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row">
+            <!-- 左侧操作面板 -->
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        <i class="bi bi-pencil"></i> 数据操作
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label class="form-label">选择号码 (1-49)</label>
+                            <div class="mb-3">
+                                <div class="color-btn-group">
+                                    <button class="btn btn-sm btn-red color-btn number-select" data-number="all"><i class="bi bi-check-all"></i> 全选</button>
+                                    <button class="btn btn-sm btn-secondary color-btn number-select" data-number="none"><i class="bi bi-x-circle"></i> 清空</button>
+                                    <button class="btn btn-sm btn-purple color-btn number-select" data-number="odd"><i class="bi bi-1-circle"></i> 奇数</button>
+                                    <button class="btn btn-sm btn-purple color-btn number-select" data-number="even"><i class="bi bi-2-circle"></i> 偶数</button>
+                                </div>
+                                <div class="color-btn-group">
+                                    <button class="btn btn-sm btn-red color-btn number-select" data-number="red"><i class="bi bi-circle-fill"></i> 红码</button>
+                                    <button class="btn btn-sm btn-green color-btn number-select" data-number="green"><i class="bi bi-circle-fill"></i> 绿码</button>
+                                    <button class="btn btn-sm btn-blue color-btn number-select" data-number="blue"><i class="bi bi-circle-fill"></i> 蓝码</button>
+                                </div>
+                            </div>
+                            
+                            <!-- 十二生肖按钮组 -->
+                            <div class="mb-3">
+                                <label class="form-label">生肖选择</label>
+                                <div class="zodiac-btn-group">
+                                    <button class="btn btn-sm btn-outline-dark zodiac-btn number-select" data-number="snake"><i class="bi bi-stars"></i> 蛇</button>
+                                    <button class="btn btn-sm btn-outline-dark zodiac-btn number-select" data-number="dragon"><i class="bi bi-stars"></i> 龙</button>
+                                    <button class="btn btn-sm btn-outline-dark zodiac-btn number-select" data-number="rabbit"><i class="bi bi-stars"></i> 兔</button>
+                                    <button class="btn btn-sm btn-outline-dark zodiac-btn number-select" data-number="tiger"><i class="bi bi-stars"></i> 虎</button>
+                                    <button class="btn btn-sm btn-outline-dark zodiac-btn number-select" data-number="ox"><i class="bi bi-stars"></i> 牛</button>
+                                    <button class="btn btn-sm btn-outline-dark zodiac-btn number-select" data-number="rat"><i class="bi bi-stars"></i> 鼠</button>
+                                    <button class="btn btn-sm btn-outline-dark zodiac-btn number-select" data-number="pig"><i class="bi bi-stars"></i> 猪</button>
+                                    <button class="btn btn-sm btn-outline-dark zodiac-btn number-select" data-number="dog"><i class="bi bi-stars"></i> 狗</button>
+                                    <button class="btn btn-sm btn-outline-dark zodiac-btn number-select" data-number="rooster"><i class="bi bi-stars"></i> 鸡</button>
+                                    <button class="btn btn-sm btn-outline-dark zodiac-btn number-select" data-number="monkey"><i class="bi bi-stars"></i> 猴</button>
+                                    <button class="btn btn-sm btn-outline-dark zodiac-btn number-select" data-number="goat"><i class="bi bi-stars"></i> 羊</button>
+                                    <button class="btn btn-sm btn-outline-dark zodiac-btn number-select" data-number="horse"><i class="bi bi-stars"></i> 马</button>
+                                </div>
+                            </div>
+                            
+                            <div id="number-grid" class="number-grid">
+                                <!-- 号码按钮将通过JS生成 -->
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="amount-input" class="form-label">金额</label>
+                            <input type="number" class="form-control" id="amount-input" placeholder="输入金额" min="1" step="1" value="100">
+                        </div>
+                        
+                        <div class="d-grid gap-2">
+                            <button id="add-amount-btn" class="btn btn-primary">
+                                <i class="bi bi-plus-circle"></i> 添加金额
+                            </button>
+                            <button id="clear-btn" class="btn btn-danger">
+                                <i class="bi bi-trash"></i> 清空所有金额
+                            </button>
+                        </div>
+                        
+                        <div class="mt-4">
+                            <div class="alert alert-info">
+                                <strong><i class="bi bi-info-circle"></i> 使用说明：</strong>
+                                <ul class="mt-2">
+                                    <li>选择号码并输入金额后点击"添加金额"</li>
+                                    <li>可多选号码批量添加相同金额</li>
+                                    <li>清空操作会重置所有金额数据</li>
+                                    <li>数据实时更新，表格自动刷新</li>
+                                    <li>使用生肖按钮快速选择对应号码</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 右侧数据展示 -->
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <span><i class="bi bi-table"></i> 号码数据表</span>
+                        <div>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-search"></i></span>
+                                <input type="text" id="search-input" class="form-control" placeholder="搜索号码或生肖...">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="table-container">
+                        <table class="table table-striped table-hover">
+                            <thead>
+                                <tr>
+                                    <th class="number-cell">号码</th>
+                                    <th class="zodiac-cell">生肖</th>
+                                    <th class="amount-column-header">金额1</th>
+                                    <th class="amount-column-header">金额2</th>
+                                    <th class="amount-column-header">金额3</th>
+                                    <th class="amount-column-header">金额4</th>
+                                    <th class="amount-column-header">金额5</th>
+                                    <th class="amount-column-header">金额6</th>
+                                    <th class="amount-column-header">金额7</th>
+                                    <th class="amount-column-header">金额8</th>
+                                    <th class="amount-column-header">金额9</th>
+                                    <th class="amount-column-header">金额10</th>
+                                    <th class="total-column-header">总和</th>
+                                </tr>
+                            </thead>
+                            <tbody id="data-table">
+                                <!-- 表格数据将通过JS生成 -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <!-- 扩展的号码总金额模块 -->
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <span><i class="bi bi-list-check"></i> 号码总金额视图（扩展）</span>
+                        <div>
+                            <button id="fill-total-btn" class="btn btn-sm btn-success me-2">
+                                <i class="bi bi-arrow-repeat"></i> 填充金额
+                            </button>
+                            <button id="apply-threshold-btn" class="btn btn-sm btn-yellow">
+                                <i class="bi bi-funnel"></i> 应用阈值
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="total-amount-container">
+                            <div class="total-amount-grid" id="total-amount-grid">
+                                <!-- 总金额项将通过JS生成 -->
+                            </div>
+                        </div>
+                        <div class="threshold-controls">
+                            <label class="form-label">阈值设置：</label>
+                            <input type="number" class="form-control threshold-input" id="threshold-input" placeholder="输入阈值" min="0" value="300">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p>Excel金额追加实时可视化工具 &copy; 2023 | 增强版</p>
+            <p class="mb-0">优化金额管理，提供实时可视化分析</p>
+        </div>
+    </div>
+
+    <script>
+        // 生肖数据
+        const zodiacs = {
+            1: "蛇", 2: "龙", 3: "兔", 4: "虎", 5: "牛", 6: "鼠", 
+            7: "猪", 8: "狗", 9: "鸡", 10: "猴", 11: "羊", 12: "马",
+            13: "蛇", 14: "龙", 15: "兔", 16: "虎", 17: "牛", 18: "鼠",
+            19: "猪", 20: "狗", 21: "鸡", 22: "猴", 23: "羊", 24: "马",
+            25: "蛇", 26: "龙", 27: "兔", 28: "虎", 29: "牛", 30: "鼠",
+            31: "猪", 32: "狗", 33: "鸡", 34: "猴", 35: "羊", 36: "马",
+            37: "蛇", 38: "龙", 39: "兔", 40: "虎", 41: "牛", 42: "鼠",
+            43: "猪", 44: "狗", 45: "鸡", 46: "猴", 47: "羊", 48: "马", 49: "蛇"
+        };
+        
+        // 生肖号码映射
+        const zodiacNumbers = {
+            snake: [1, 13, 25, 37, 49],
+            dragon: [2, 14, 26, 38],
+            rabbit: [3, 15, 27, 39],
+            tiger: [4, 16, 28, 40],
+            ox: [5, 17, 29, 41],
+            rat: [6, 18, 30, 42],
+            pig: [7, 19, 31, 43],
+            dog: [8, 20, 32, 44],
+            rooster: [9, 21, 33, 45],
+            monkey: [10, 22, 34, 46],
+            goat: [11, 23, 35, 47],
+            horse: [12, 24, 36, 48]
+        };
+        
+        // 颜色分组
+        const colorGroups = {
+            red: [1, 2, 12, 13, 23, 24, 34, 35, 45, 46, 7, 8, 18, 19, 29, 30, 40],
+            green: [5, 6, 11, 16, 17, 21, 22, 27, 28, 32, 33, 38, 39, 43, 44, 49],
+            blue: [3, 4, 9, 10, 14, 15, 20, 25, 26, 31, 36, 37, 41, 42, 47, 48]
+        };
+        
+        // 数据存储
+        let numberData = [];
+        
+        // 初始化应用
+        function initApp() {
+            // 生成号码按钮
+            generateNumberButtons();
+            
+            // 生成总金额网格
+            generateTotalAmountGrid();
+            
+            // 生成示例数据
+            generateSampleData();
+            
+            // 渲染表格
+            renderTable();
+            
+            // 更新统计信息
+            updateStats();
+            
+            // 初始应用阈值
+            applyThreshold();
+            
+            // 初始化事件监听器
+            setupEventListeners();
+        }
+        
+        // 生成号码选择按钮
+        function generateNumberButtons() {
+            const container = document.getElementById('number-grid');
+            container.innerHTML = '';
+            
+            // 创建网格布局（10列，5行）
+            for (let col = 1; col <= 10; col++) {
+                const columnDiv = document.createElement('div');
+                columnDiv.className = 'number-column';
+                
+                for (let row = 0; row < 5; row++) {
+                    const num = col + (row * 10);
+                    if (num > 49) continue;
+                    
+                    const button = document.createElement('button');
+                    button.className = 'btn btn-outline-secondary number-btn';
+                    button.textContent = num;
+                    button.dataset.number = num;
+                    
+                    // 设置颜色
+                    if (colorGroups.red.includes(num)) {
+                        button.classList.add('border-danger', 'text-danger');
+                    } else if (colorGroups.green.includes(num)) {
+                        button.classList.add('border-success', 'text-success');
+                    } else if (colorGroups.blue.includes(num)) {
+                        button.classList.add('border-primary', 'text-primary');
+                    }
+                    
+                    button.addEventListener('click', function() {
+                        this.classList.toggle('btn-primary');
+                        this.classList.toggle('selected');
+                        
+                        if (this.classList.contains('btn-primary')) {
+                            this.classList.remove('btn-outline-secondary', 'border-danger', 'text-danger', 'border-success', 'text-success', 'border-primary', 'text-primary');
+                        } else {
+                            // 恢复颜色
+                            if (colorGroups.red.includes(num)) {
+                                button.classList.add('border-danger', 'text-danger');
+                            } else if (colorGroups.green.includes(num)) {
+                                button.classList.add('border-success', 'text-success');
+                            } else if (colorGroups.blue.includes(num)) {
+                                button.classList.add('border-primary', 'text-primary');
+                            }
+                        }
+                    });
+                    
+                    columnDiv.appendChild(button);
+                }
+                
+                container.appendChild(columnDiv);
+            }
+        }
+        
+        // 生成总金额网格（按列分组）
+        function generateTotalAmountGrid() {
+            const container = document.getElementById('total-amount-grid');
+            container.innerHTML = '';
+            
+            // 按列创建网格
+            for (let col = 1; col <= 10; col++) {
+                const columnDiv = document.createElement('div');
+                columnDiv.className = 'total-amount-column';
+                
+                // 每列包含5个数字（除了最后一列只有4个）
+                for (let row = 0; row < 5; row++) {
+                    const num = col + (row * 10);
+                    if (num > 49) continue;
+                    
+                    const item = createTotalAmountItem(num);
+                    columnDiv.appendChild(item);
+                }
+                
+                container.appendChild(columnDiv);
+            }
+        }
+        
+        // 创建总金额项
+        function createTotalAmountItem(num) {
+            const item = document.createElement('div');
+            item.className = 'total-amount-item';
+            item.dataset.number = num;
+            
+            const numberLabel = document.createElement('div');
+            numberLabel.className = 'total-amount-number';
+            numberLabel.textContent = num;
+            
+            // 设置数字背景色
+            if (colorGroups.red.includes(num)) {
+                numberLabel.style.background = 'linear-gradient(135deg, var(--red-color), #d62c1f)';
+            } else if (colorGroups.green.includes(num)) {
+                numberLabel.style.background = 'linear-gradient(135deg, var(--green-color), #27ae60)';
+            } else if (colorGroups.blue.includes(num)) {
+                numberLabel.style.background = 'linear-gradient(135deg, var(--blue-color), #2980b9)';
+            }
+            
+            const input = document.createElement('input');
+            input.type = 'number';
+            input.className = 'total-amount-input';
+            input.dataset.number = num;
+            input.value = '0';
+            input.min = '0';
+            input.step = '1';
+            
+            item.appendChild(numberLabel);
+            item.appendChild(input);
+            
+            return item;
+        }
+        
+        // 设置事件监听器
+        function setupEventListeners() {
+            // 添加金额按钮
+            document.getElementById('add-amount-btn').addEventListener('click', addAmount);
+            
+            // 清空按钮
+            document.getElementById('clear-btn').addEventListener('click', clearAmounts);
+            
+            // 搜索输入
+            document.getElementById('search-input').addEventListener('input', filterTable);
+            
+            // 填充金额按钮
+            document.getElementById('fill-total-btn').addEventListener('click', fillTotalAmounts);
+            
+            // 应用阈值按钮
+            document.getElementById('apply-threshold-btn').addEventListener('click', applyThreshold);
+            
+            // 号码选择按钮
+            document.querySelectorAll('.number-select').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const action = this.dataset.number;
+                    selectNumbers(action);
+                });
+            });
+        }
+        
+        // 选择号码
+        function selectNumbers(action) {
+            const buttons = document.querySelectorAll('.number-btn');
+            
+            buttons.forEach(btn => {
+                const num = parseInt(btn.dataset.number);
+                let shouldSelect = false;
+                
+                switch(action) {
+                    case 'all':
+                        shouldSelect = true;
+                        break;
+                    case 'none':
+                        shouldSelect = false;
+                        break;
+                    case 'odd':
+                        shouldSelect = (num % 2 !== 0);
+                        break;
+                    case 'even':
+                        shouldSelect = (num % 2 === 0);
+                        break;
+                    case 'red':
+                        shouldSelect = colorGroups.red.includes(num);
+                        break;
+                    case 'green':
+                        shouldSelect = colorGroups.green.includes(num);
+                        break;
+                    case 'blue':
+                        shouldSelect = colorGroups.blue.includes(num);
+                        break;
+                    default:
+                        // 生肖选择
+                        if (zodiacNumbers[action]) {
+                            shouldSelect = zodiacNumbers[action].includes(num);
+                        }
+                }
+                
+                if (shouldSelect) {
+                    btn.classList.add('btn-primary', 'selected');
+                    btn.classList.remove('btn-outline-secondary', 'border-danger', 'text-danger', 'border-success', 'text-success', 'border-primary', 'text-primary');
+                } else {
+                    btn.classList.remove('btn-primary', 'selected');
+                    
+                    // 恢复颜色
+                    if (colorGroups.red.includes(num)) {
+                        btn.classList.add('border-danger', 'text-danger');
+                    } else if (colorGroups.green.includes(num)) {
+                        btn.classList.add('border-success', 'text-success');
+                    } else if (colorGroups.blue.includes(num)) {
+                        btn.classList.add('border-primary', 'text-primary');
+                    } else {
+                        btn.classList.add('btn-outline-secondary');
+                    }
+                }
+            });
+        }
+        
+        // 生成示例数据
+        function generateSampleData() {
+            numberData = [];
+            
+            for (let i = 1; i <= 49; i++) {
+                // 随机生成一些初始金额
+                const amounts = [];
+                const recordCount = Math.floor(Math.random() * 3);
+                let total = 0;
+                
+                for (let j = 0; j < recordCount; j++) {
+                    const amount = Math.floor(Math.random() * 100) + 50;
+                    amounts.push(amount);
+                    total += amount;
+                }
+                
+                numberData.push({
+                    number: i,
+                    zodiac: zodiacs[i],
+                    amounts: amounts,
+                    total: total
+                });
+            }
+        }
+        
+        // 渲染表格（增加金额列）
+        function renderTable() {
+            const tableBody = document.getElementById('data-table');
+            tableBody.innerHTML = '';
+            
+            numberData.forEach(item => {
+                const row = document.createElement('tr');
+                
+                // 号码列
+                const numCell = document.createElement('td');
+                numCell.className = 'number-cell';
+                numCell.textContent = item.number;
+                
+                // 设置颜色
+                if (colorGroups.red.includes(item.number)) {
+                    numCell.style.color = 'var(--red-color)';
+                } else if (colorGroups.green.includes(item.number)) {
+                    numCell.style.color = 'var(--green-color)';
+                } else if (colorGroups.blue.includes(item.number)) {
+                    numCell.style.color = 'var(--blue-color)';
+                }
+                
+                row.appendChild(numCell);
+                
+                // 生肖列
+                const zodiacCell = document.createElement('td');
+                zodiacCell.className = 'zodiac-cell';
+                zodiacCell.innerHTML = `<span class="zodiac-badge">${item.zodiac}</span>`;
+                row.appendChild(zodiacCell);
+                
+                // 金额列（最多10列）
+                for (let i = 0; i < 10; i++) {
+                    const amountCell = document.createElement('td');
+                    amountCell.className = 'amount-cell';
+                    
+                    if (i < item.amounts.length) {
+                        amountCell.textContent = '¥' + item.amounts[i];
+                    } else {
+                        amountCell.textContent = '-';
+                    }
+                    
+                    row.appendChild(amountCell);
+                }
+                
+                // 总和列
+                const totalCell = document.createElement('td');
+                totalCell.className = 'total-cell';
+                totalCell.textContent = '¥' + item.total;
+                row.appendChild(totalCell);
+                
+                tableBody.appendChild(row);
+            });
+        }
+        
+        // 更新统计信息
+        function updateStats() {
+            // 总金额
+            const totalAmount = numberData.reduce((sum, item) => sum + item.total, 0);
+            document.getElementById('total-amount').textContent = '¥' + totalAmount;
+            
+            // 记录条数
+            const recordCount = numberData.reduce((sum, item) => sum + item.amounts.length, 0);
+            document.getElementById('record-count').textContent = recordCount;
+            
+            // 最高金额号码
+            const maxItem = [...numberData].sort((a, b) => b.total - a.total)[0];
+            document.getElementById('max-number').textContent = maxItem.number + ' (¥' + maxItem.total + ')';
+            
+            // 最低金额号码 (排除0)
+            const nonZero = numberData.filter(item => item.total > 0);
+            const minItem = nonZero.length > 0 ? 
+                [...nonZero].sort((a, b) => a.total - b.total)[0] : 
+                {number: '-', total: 0};
+            document.getElementById('min-number').textContent = minItem.number + (minItem.number !== '-' ? ' (¥' + minItem.total + ')' : '');
+            
+            // 更新进度条
+            document.getElementById('total-progress').style.width = Math.min(totalAmount / 5000 * 100, 100) + '%';
+            document.getElementById('record-progress').style.width = Math.min(recordCount / 100 * 100, 100) + '%';
+            document.getElementById('max-progress').style.width = Math.min(maxItem.total / 1000 * 100, 100) + '%';
+            document.getElementById('min-progress').style.width = minItem.total > 0 ? Math.min(minItem.total / 500 * 100, 100) + '%' : '0%';
+        }
+        
+        // 添加金额
+        function addAmount() {
+            const amountInput = document.getElementById('amount-input');
+            const amount = parseInt(amountInput.value);
+            
+            if (isNaN(amount) || amount <= 0) {
+                showNotification('请输入有效的金额', 'danger');
+                return;
+            }
+            
+            const selectedButtons = document.querySelectorAll('.number-btn.btn-primary');
+            
+            if (selectedButtons.length === 0) {
+                showNotification('请至少选择一个号码', 'warning');
+                return;
+            }
+            
+            const selectedNumbers = [];
+            const updatedNumbers = [];
+            
+            selectedButtons.forEach(btn => {
+                const num = parseInt(btn.dataset.number);
+                selectedNumbers.push(num);
+                
+                // 更新数据
+                const item = numberData.find(item => item.number === num);
+                if (item) {
+                    item.amounts.push(amount);
+                    item.total += amount;
+                    updatedNumbers.push(num);
+                }
+            });
+            
+            // 重置选择
+            selectNumbers('none');
+            
+            // 更新UI
+            renderTable();
+            updateStats();
+            
+            // 高亮更新行
+            highlightUpdatedRows(updatedNumbers);
+            
+            showNotification(`成功为 ${selectedNumbers.length} 个号码添加 ¥${amount}`, 'success');
+        }
+        
+        // 填充总金额到视图
+        function fillTotalAmounts() {
+            numberData.forEach(item => {
+                const input = document.querySelector(`.total-amount-input[data-number="${item.number}"]`);
+                if (input) {
+                    input.value = item.total;
+                }
+            });
+            
+            showNotification('已填充所有号码的总金额', 'success');
+            applyThreshold();
+        }
+        
+        // 应用阈值
+        function applyThreshold() {
+            const thresholdInput = document.getElementById('threshold-input');
+            const threshold = parseInt(thresholdInput.value);
+            
+            if (isNaN(threshold)) {
+                showNotification('请输入有效的阈值', 'danger');
+                return;
+            }
+            
+            const inputs = document.querySelectorAll('.total-amount-input');
+            inputs.forEach(input => {
+                const value = parseInt(input.value) || 0;
+                
+                // 清除之前的样式
+                input.style.background = '';
+                input.style.color = '';
+                input.style.fontWeight = '';
+                
+                // 如果值小于阈值，应用渐变背景
+                if (value > 0 && value < threshold) {
+                    const ratio = value / threshold;
+                    const red = Math.round(255 * (1 - ratio));
+                    const green = Math.round(255 * ratio);
+                    input.style.background = `linear-gradient(to right, rgb(${red}, ${green}, 100), #f8f9fa)`;
+                    input.style.color = '#2c3e50';
+                    input.style.fontWeight = 'bold';
+                }
+            });
+            
+            showNotification(`已应用阈值: ¥${threshold}，高亮显示金额低于阈值的号码`, 'info');
+        }
+        
+        // 高亮更新行
+        function highlightUpdatedRows(numbers) {
+            const rows = document.querySelectorAll('#data-table tr');
+            
+            rows.forEach(row => {
+                const num = parseInt(row.querySelector('.number-cell').textContent);
+                if (numbers.includes(num)) {
+                    row.classList.add('highlight-row');
+                    setTimeout(() => {
+                        row.classList.remove('highlight-row');
+                    }, 1800);
+                }
+            });
+        }
+        
+        // 清空金额
+        function clearAmounts() {
+            if (!confirm('确定要清空所有金额数据吗？此操作不可撤销。')) {
+                return;
+            }
+            
+            numberData.forEach(item => {
+                item.amounts = [];
+                item.total = 0;
+            });
+            
+            // 更新UI
+            renderTable();
+            updateStats();
+            
+            showNotification('已清空所有金额数据', 'info');
+        }
+        
+        // 筛选表格
+        function filterTable() {
+            const searchTerm = document.getElementById('search-input').value.toLowerCase();
+            const rows = document.querySelectorAll('#data-table tr');
+            
+            rows.forEach(row => {
+                const num = row.querySelector('.number-cell').textContent;
+                const zodiac = row.querySelector('.zodiac-badge').textContent.toLowerCase();
+                
+                if (num.includes(searchTerm) || zodiac.includes(searchTerm)) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        }
+        
+        // 显示通知
+        function showNotification(message, type) {
+            // 移除现有通知
+            const existing = document.querySelector('.notification');
+            if (existing) existing.remove();
+            
+            const alert = document.createElement('div');
+            alert.className = `notification alert alert-${type} alert-dismissible fade show`;
+            alert.role = 'alert';
+            alert.innerHTML = `
+                <strong>${type === 'success' ? '<i class="bi bi-check-circle-fill"></i> 成功' : 
+                          type === 'danger' ? '<i class="bi bi-exclamation-circle-fill"></i> 错误' : 
+                          type === 'warning' ? '<i class="bi bi-exclamation-triangle-fill"></i> 警告' : 
+                          '<i class="bi bi-info-circle-fill"></i> 信息'}</strong>
+                <span>${message}</span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            `;
+            
+            document.body.appendChild(alert);
+            
+            // 3秒后自动移除
+            setTimeout(() => {
+                if (alert) alert.remove();
+            }, 3000);
+        }
+        
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', initApp);
+    </script>
+</body>
+</html>
